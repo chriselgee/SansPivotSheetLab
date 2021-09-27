@@ -50,3 +50,5 @@ runcmd:
   - sudo systemctl restart sshd.service
   - sudo systemctl enable webserve.service
   - sudo systemctl start webserve.service
+  - echo "Hacking for cash monies!" > /opt/secrets.txt
+  

@@ -10,5 +10,5 @@ variable "cidr_subnet" {
 
 variable "region" {
   description = "The region Terraform deploys your instance"
-  default = "us-east-2"
+  default     = "us-east-2"
 }

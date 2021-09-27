@@ -28,6 +28,16 @@ output "linux_target_private_ip" {
   value       = aws_instance.linux_target.private_ip
 }
 
+output "sg_pivot" {
+  description = "Pivot Security Group"
+  value       = aws_security_group.sg_pivot.id
+}
+
+output "vpc" {
+  description = "Pivot Range VPC"
+  value =       aws_vpc.vpc.id
+}
+
 # output "windows_pivot_public_ip" {
 #   description = "Windows pivot box public IP address"
 #   value = aws_instance.windows_pivot.public_ip

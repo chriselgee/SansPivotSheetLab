@@ -34,7 +34,7 @@ write_files:
 # Set up asset
 runcmd:
   - whoami > /tmp/who.txt
-  - sudo apt -y install nmap ncat python3 net-tools
+  - sudo apt -y install nmap ncat python3 net-tools proxychains socat
   - sudo sed -i "s/#GatewayPorts no/GatewayPorts yes/" /etc/ssh/sshd_config
   - sudo systemctl restart sshd.service
   - curl https://raw.githubusercontent.com/rapid7/metasploit-omnibus/master/config/templates/metasploit-framework-wrappers/msfupdate.erb > msfinstall && \
