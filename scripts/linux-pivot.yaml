@@ -1,0 +1,52 @@
+#cloud-config
+# Add groups to the system
+# Adds the ubuntu group with members 'root' and 'sys'
+# and the empty group hashicorp.
+groups:
+  - ubuntu: [root,sys]
+  - pivot
+
+# Add users to the system. Users are added after groups are added.
+users:
+  - default
+  - name: pivot
+    gecos: pivot
+    shell: /bin/bash
+    primary_group: pivot
+    sudo: ALL=(ALL) NOPASSWD:ALL
+    groups: users, admin
+    lock_passwd: false
+    ssh_authorized_keys:
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCxrkObFiuRQMaW3h2oMRn2itXzb4k7yAChEZiAA0QXAECHEcgyr4Ch42TbtyJoOEjz5sPhxjm358Nnz/9G6hTZMSYxWKgSFkJNr9YS93D07TQbJ1JbGlLR583uHmfRtXnT7wf+stRW8O8EiVp57jZCBDb7yPZBj6ML2yaZDTQJCE8mOxIkRLjjxa5ggynBtb8qvG0cBS7p5eqptxPVK/z0flXVzkOxIHXrdwApMMowdbVfauwMauothqApV1VpQwTogLPV99qh22d+s6jstj2dt9nGOuuNEr90kAX6nviYNvpMvwWxZTylsRVS9eUoOkfV4Mkeex/wO3/a3WCTHwuV0DYJ60Z5dj6D0SJ0gXkCyMUi+wPgweBzu8GuMxiJSZlwE/JOXCnPEX3uZJFgdutaZg+aQUbN7hgHLdabm8eCRU5SFSunxUECu5AUgIPegMzwfdlkYOAx0YraCS0H9a4s4+hrugkzxQyv9F+W9qhBEbvHqIwDoGV1jw95sBlT+Fk= elgee-tf-demo
+
+# Downloads the golang package
+packages:
+  - ncat nmap
+  #  - golang-go
+
+write_files:
+  - content: ${filebase64("./assets/hosts")}
+    encoding: b64
+    owner: root:root
+    path: /etc/hosts
+    permissions: '0644'
+  - content: ${filebase64("./assets/webserve.py")}
+    encoding: b64
+    owner: root:root
+    path: /opt/webserve.py
+    permissions: '0755'
+  - content: ${filebase64("./assets/webserve.service")}
+    encoding: b64
+    owner: root:root
+    path: /etc/systemd/system/webserve.service
+    permissions: '0755'
+
+# Set up asset
+runcmd:
+  - whoami > /tmp/who.txt
+  - sudo apt -y install nmap ncat python3 python3-pip net-tools
+  - sudo pip3 install flask --upgrade
+  - sudo sed -i "s/#GatewayPorts no/GatewayPorts yes/" /etc/ssh/sshd_config
+  - sudo systemctl restart sshd.service
+  - sudo systemctl enable webserve.service
+  - sudo systemctl start webserve.service
