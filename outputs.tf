@@ -35,7 +35,7 @@ output "sg_pivot" {
 
 output "vpc" {
   description = "Pivot Range VPC"
-  value =       aws_vpc.vpc.id
+  value       = aws_vpc.vpc.id
 }
 
 # output "windows_pivot_public_ip" {

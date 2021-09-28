@@ -36,13 +36,13 @@ Do you want to perform these actions?
 
   Enter a value: yes
 [...]
-Apply complete! Resources: 1 added, 0 changed, 0 destroyed.
-$ terraform show
+Apply complete! Resources: 11 added, 0 changed, 0 destroyed.
+$ terraform show #optional - to show assets and addresses again
 ```
 
 ### Optionally: Create a Windows Instance as Another Pivot
 - From the AWS Console, Create Instance
-- Pick a Windows AMI - maybe 2019 (ami-0428fc1ee1bde045a)
+- Pick a Windows AMI - maybe 2022 (ami-0f8a21019cb8e9c33)
 - Next, then t2micro might be OK
 - Next, then VPC from the Terraform output
 - Set Auto-Assign IP to Enable
