@@ -17,7 +17,7 @@ users:
     groups: users, admin
     lock_passwd: false
     ssh_authorized_keys:
-      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQC/8iH3S6a7qA6W4+wDsE7gztSR7/ScR4XrYFnB2UcOwi2w7KYk+b+DSoD8Oc2dPc27sknCBpKFdxn9g3+/FThGTd44sg+aihXWGpOPh7lQHqdIdMTuWvSJKooDgp1TDL/jSxe4dY9mUE17GvHYDJGGt2lM2yaemQisdlMYvTzL/s2D6VBxGp/PkMPHG0rOArbMiTJxinDbX0+niIPhlqqu6wTZhnwdeiRjx12uMQMiby1E0G4Nv7XysxzDGwxyr5ADGUVm4B9XrF0vY2aWWXFC0n2ihPe+3QsXPfK6ljJZY3jK75+lIq8dmtrJrapeexdBpZVuNS2ybqjdRgc0TwBLjbucnbO+IHd9sjIELgWYCIV24H4eCZkdjJRb16lvdFcLzOBBFtGEVjxO2xZ1TGHPOD+ql1ZkDB6v88ZdEoWAF0Twy4YUzNS5pKwf0B5sS5cGg0G0MUz3/6f281hZ+l0D67SKDXkkAYFr253hxp+3hqYPnH/HuVsU0Ah2g5sWiq0= celgee@sans.org
+      - ssh-rsa YourPublicKeyHere
 
 # Supposed to download packages but doesn't
 packages:
