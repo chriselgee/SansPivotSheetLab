@@ -4,20 +4,20 @@
 # and the empty group hashicorp.
 groups:
   - ubuntu: [root,sys]
-  - pivot
+  - attacker
 
 # Add users to the system. Users are added after groups are added.
 users:
   - default
-  - name: pivot
-    gecos: pivot
+  - name: attacker
+    gecos: attacker
     shell: /bin/bash
-    primary_group: pivot
+    primary_group: attacker
     sudo: ALL=(ALL) NOPASSWD:ALL
     groups: users, admin
     lock_passwd: false
     ssh_authorized_keys:
-      - ssh-rsa YourPublicKeyHere
+      - ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDeMq6jfpd6M2c4e2HsIW65ZdgJmTUq2YUIBBT9Eg1Eb984QsjoKc4zZz/WKSKIIw2ktRQBb2B7+hRS/Yezl8bjTs131UysYPn4rG8Ef/9HjOD8yuehOBWZupJrRDBmkDz/VkfxRqfANCACN75W4NrlgsdsLDIEWYdGsRB49YPNeXBY1pvYpXdHyVouo9dpj569m1D4zkjwsU66rNj5D6ipBqNPkPZz+8HgOBasjDJarDWTLXAm0auC17TtgtVXdAneEHdn0iGFG3/2WVkTfqVwPhCLHYsPLb1VEFqru5bXh7Vun9ELY/MiLMCtk3YdUjF2jYppL22p/uovK1ISGwsgysXK2KNB/58S8Ze/GQkbwbFvgN4vgo/EnpdhUWU4pxJXxpn3cjc7OaN99BXBk87kLbhCII22XyY2JC5xG2i3/S1CRRe6U7Js/ZarhqPsDl6Gji+dwS4duuFe+KsFX8xlbp8fS0MAZyocw703o+HSPPnL/1GVfinQt+f/9o0liNM= totally@toteslegit.us
 
 # Supposed to download packages but doesn't
 packages:
@@ -44,9 +44,5 @@ write_files:
 # Set up asset
 runcmd:
   - whoami > /tmp/who.txt
-  - sudo apt -y install nmap ncat python3 python3-pip net-tools socat
-  - sudo pip3 install flask --upgrade
-  - sudo sed -i "s/#GatewayPorts no/GatewayPorts yes/" /etc/ssh/sshd_config
-  - sudo systemctl restart sshd.service
-  - sudo systemctl enable webserve.service
-  - sudo systemctl start webserve.service
+  - sudo apt -y install nmap ncat python3 python3-pip net-tools
+  - echo "Hacking for cash monies!" > /opt/secrets.txt

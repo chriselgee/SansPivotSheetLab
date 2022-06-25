@@ -1,0 +1,18 @@
+<html>
+    <head><title>Legitimate Website!</title></head>
+    <body>
+    <h1>Site maintenance</h1><!-- or something -->
+    <p>Use this form to check the distance to other sitez!</p>
+    <form action="/" method="post">
+        <label for="site">Site:</label><br>
+        <input type="text" id="site" name="site" value="127.0.0.1"><br>
+        <input type="submit" value="Submit">
+    </form> 
+    <pre>
+        {{site}}
+    </pre>
+    <pre>
+        {{output}}
+    </pre>
+    <img src="{{url_for('static', filename='legit.png')}}" />
+</body></html>
