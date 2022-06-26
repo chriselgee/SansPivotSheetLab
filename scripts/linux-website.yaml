@@ -25,11 +25,6 @@ packages:
   #  - golang-go
 
 write_files:
-  - content: ${filebase64("./assets/hosts")}
-    encoding: b64
-    owner: root:root
-    path: /etc/hosts
-    permissions: '0644'
   - content: ${filebase64("./assets/website.tar.gz")}
     encoding: b64
     owner: root:root
