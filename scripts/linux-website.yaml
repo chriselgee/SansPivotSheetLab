@@ -28,7 +28,7 @@ write_files:
   - content: ${filebase64("./assets/website.tar.gz")}
     encoding: b64
     owner: root:root
-    path: /opt/webserve.py
+    path: /opt/webserve.tar.gz
     permissions: '0755'
   - content: ${filebase64("./assets/webserve.service")}
     encoding: b64
@@ -39,7 +39,8 @@ write_files:
 # Set up asset
 runcmd:
   - whoami > /tmp/who.txt
-  - sudo apt -y install nmap ncat python3 net-tools
+  - sudo apt -y install nmap ncat python3 python3-pip et-tools
+  - python3 -m pip install flask
+  - tar -xvf /opt/webserve.tar.gz -C /opt
   - sudo systemctl enable webserve.service
   - sudo systemctl start webserve.service
-  - tar -xvf /opt/webserve.tar.gz -C /opt

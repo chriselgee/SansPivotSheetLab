@@ -30,9 +30,19 @@ write_files:
     owner: client:client
     path: /opt/webclient.py
     permissions: '0755'
-  - content: ${filebase64("./assets/webclient.service")}
+  - content: ${filebase64("./assets/urls.txt")}
     encoding: b64
     owner: client:client
+    path: /opt/urls.txt
+    permissions: '0755'
+  - content: ${filebase64("./assets/userAgents.txt")}
+    encoding: b64
+    owner: client:client
+    path: /opt/userAgents.txt
+    permissions: '0755'
+  - content: ${filebase64("./assets/webclient.service")}
+    encoding: b64
+    owner: root:root
     path: /etc/systemd/system/webclient.service
     permissions: '0755'
 

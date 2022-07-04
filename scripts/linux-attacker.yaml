@@ -24,18 +24,6 @@ packages:
   - ncat nmap
   #  - golang-go
 
-write_files:
-  - content: ${filebase64("./assets/webserve.py")}
-    encoding: b64
-    owner: root:root
-    path: /opt/webserve.py
-    permissions: '0755'
-  - content: ${filebase64("./assets/webserve.service")}
-    encoding: b64
-    owner: root:root
-    path: /etc/systemd/system/webserve.service
-    permissions: '0755'
-
 # Set up asset
 runcmd:
   - whoami > /tmp/who.txt
