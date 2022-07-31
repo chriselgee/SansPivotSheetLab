@@ -9,6 +9,13 @@ URLs = open("urls.txt","r").readlines()
 userAgent = "Mozilla/5.0 (Windows NT 6.1; WOW64; rv:13.37) Gecko/20100101 Firefox/12.0"
 header = {'User-Agent': userAgent}
 
+sitesUp = False
+while not sitesUp == "200":
+    try:
+        req = requests.get(site)
+    except:
+        pass
+
 sleep(60)
 
 for i in range(10):

@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
-from flask import Flask, request, render_template, session
+from flask import Flask, request, render_template, session, make_response
 import os
 import argparse
+import sqlite3
+from DBFuncs import *
 
 # colorize output
 OV = '\x1b[0;33m' # verbose
@@ -70,8 +72,8 @@ def maintenance():
 # defines behavior for clients requesting /login.html
 def login():
     if request.method == "POST":
-        if request.form['username'] == "thebob" and request.form['password'] == "p@$$w0rd1":
-            session["user"] = "thebob"
+        if checkcreds(username=request.form['username'], password=md5it(request.form['password']))["Success"]:
+            session["user"] = "username"
             resp = make_response(render_template('admin.html'))
             return resp
         else:
@@ -85,6 +87,7 @@ def login():
 def admin():
     return render_template("admin.html")
 
-
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', port=80, debug=True, threaded=True)
+    builddb()
+    adduser("bob",md5it("passw0rd"))
+    app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)
