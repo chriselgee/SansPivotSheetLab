@@ -1,5 +1,5 @@
 # SANS Pivot Cheat Sheet Lab
-This serves as a tool for cybersecurity enthusiasts to better understand pivoting through an environment. The central reference is the [SANS Pivot Cheat Sheet](https://www.sans.org/posters/pivot-cheat-sheet/). Some code used from Terraform's [HashiCorp Learn platform](https://learn.hashicorp.com/tutorials/terraform/cloud-init?in=terraform/provision).
+This serves as a tool for cybersecurity enthusiasts to better understand pivoting through an environment. The central reference is the [SANS Pivot Cheat Sheet](https://www.sans.org/posters/pivot-cheat-sheet/). Some code used from Terraform's [HashiCorp Learn platform](https://learn.hashicorp.com/tutorials/terraform/cloud-init?in=terraform/provision). There's also a free [SANS webcast](https://www.sans.org/webcasts/getting-the-most-out-of-the-sans-pivot-cheat-sheet-2022/) using this repo and covering the cheat sheet. Enjoy!
 
 ## Dependencies
 - [AWS IAM Credentials](https://docs.aws.amazon.com/IAM/latest/UserGuide/id_credentials_access-keys.html) to interact with an AWS account
