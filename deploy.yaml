@@ -38,7 +38,6 @@ webserver:
     webserve.service]
   host: www.toteslegit.us
   name: WebServer
-  ports: [22, 8000]
   size: t2.micro
   userdata: |
     whoami > /tmp/who.txt
@@ -56,7 +55,6 @@ clients:
     webclient.py,
     webclient.service]
   name: WebClients
-  ports: [22]
   size: t2.micro
   userdata: |
     whoami > /tmp/who.txt
@@ -73,7 +71,6 @@ attacker:
     urls.txt,
     userAgents.txt]
   name: Attacker
-  ports: [22]
   size: t2.micro
   userdata: |
     whoami > /tmp/who.txt

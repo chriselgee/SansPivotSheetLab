@@ -4,10 +4,12 @@ import json
 from icecream import ic
 import yaml
 import os
+from time import sleep
 
 # setup from deploy.ini
 with open("deploy.yaml", "r") as ymlfile:
     config = yaml.safe_load(ymlfile)
+
 boto3.setup_default_session(profile_name=config["aws"]["profile"], region_name=config["aws"]["region"])
 ec2Client = boto3.client('ec2')
 ec2Resource = boto3.resource('ec2')
@@ -15,6 +17,7 @@ iamClient = boto3.client("iam")
 s3Client = boto3.client('s3')
 s3Resource = boto3.resource('s3')
 accountID = boto3.client('sts').get_caller_identity().get('Account')
+ic(accountID)
 
 # create keypair
 keypair = ec2Client.create_key_pair(KeyName=config["keypair"]["name"])
@@ -34,6 +37,8 @@ bucketPolicyString = json.dumps(config["bucket"]["policy"])
 bucketPolicy = bucketPolicyString\
     .replace("BUCKET_NAME",config["bucket"]["name"])\
     .replace('"PRINCIPAL_NAME"', principal)
+
+ic(bucketPolicy)
 s3Client.put_bucket_policy(Bucket=config["bucket"]["name"], Policy=bucketPolicy)
 for file in config["bucket"]["upload"]:
     s3Client.upload_file(config["bucket"]["uploadDir"]+file, config["bucket"]["name"], file)
@@ -94,6 +99,14 @@ for host in config["hosts"]:
         ec2instances.append(instance)
         ec2Resource.create_tags(Resources=[instance.id],
             Tags=[{'Key':'name', 'Value': config[host]["name"]}])
+ic(ec2instances)
+
+userInput = "foo"
+while userInput != "exit":
+    print("Webserver: " + ec2instances[0].get(u'PublicIpAddress'))
+    print("Attacker:  " + ec2instances[3].get(u'PublicIpAddress'))
+    userInput = input("To exit, type 'exit': ")
+
 
 # build a list of tear-down feedback
 tearDown = []
