@@ -2,8 +2,8 @@
 from flask import Flask, request, render_template, session, make_response
 import os
 import argparse
-import sqlite3
 from DBFuncs import *
+import json
 
 # colorize output
 OV = '\x1b[0;33m' # verbose
@@ -89,5 +89,5 @@ def admin():
 
 if __name__ == "__main__":
     builddb()
-    adduser("bob",md5it("passw0rd"))
+    populateDB(json.loads(open("./users.json","r").read()))
     app.run(host='0.0.0.0', port=8000, debug=True, threaded=True)

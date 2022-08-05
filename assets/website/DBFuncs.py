@@ -115,3 +115,8 @@ def updatepassword(username='-',oldpass='-',newpass='-'):
         print(OE+'updatepassword failed; error '+OM+'badinputs')
         return {"Success":False, "Error":"badinputs"}
 # updatepassword('bob','0123456789abcdef0123456789abcdef','0123456789abcdef0123456789abcdff')
+
+def populateDB(users = []):
+    # create users in the DB
+    for user in users:
+        adduser(username=user["username"], password=md5it(user["password"]))

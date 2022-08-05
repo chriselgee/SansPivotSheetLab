@@ -54,6 +54,7 @@ $ terraform show #optional - to show assets and addresses again
 
 ### Connect to the website host with the IP from the Terraform Output
 - `ssh website@websiteIPHere -i ../tf-cloud-init`
+- `ssh attacker@attackerIPHere -i ../tf-cloud-init`
 - If you've lost track of those IPs, just `terraform show` to see them again
 
 ## Tear Down Steps
