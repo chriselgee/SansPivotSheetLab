@@ -3,68 +3,126 @@ import boto3
 import json
 from icecream import ic
 import yaml
+import os
 
 # setup from deploy.ini
 with open("deploy.yaml", "r") as ymlfile:
     config = yaml.safe_load(ymlfile)
-
 boto3.setup_default_session(profile_name=config["aws"]["profile"], region_name=config["aws"]["region"])
+ec2Client = boto3.client('ec2')
+ec2Resource = boto3.resource('ec2')
+iamClient = boto3.client("iam")
+s3Client = boto3.client('s3')
+s3Resource = boto3.resource('s3')
+accountID = boto3.client('sts').get_caller_identity().get('Account')
 
-ec2 = boto3.client('ec2')
-response = ec2.create_key_pair(KeyName=config["keypair"]["name"])
-ic(response)
+# create keypair
+keypair = ec2Client.create_key_pair(KeyName=config["keypair"]["name"])
+ic(keypair)
+with open(config["keypair"]["name"]+".pem", "w") as fout:
+    fout.write(keypair["KeyMaterial"])
 
-ec2instances = []
-for host in config["hosts"]:
-    instance = ec2.create_instances(
-        ImageId=config[host]["ami"],
-        MinCount=config[host]["count"],
-        MaxCount=config[host]["count"],
-        InstanceType="t2.nano",
-        KeyName=config["keypair"]["name"],
-        UserData=[host]["userdata"],
-        NetworkInterfaces=[
-            {
-                "SubnetId": SUBNET_ID,
-                "DeviceIndex": 0,
-                "AssociatePublicIpAddress": True,
-                "Groups": [sg.group_id],
-            }
-        ],
-    )
+# create IAM user
+iam = iamClient.create_user(UserName=config["iam"]["name"])
+principal = f'{{ "AWS": "arn:aws:iam::{accountID}:user/{config["iam"]["name"]}" }}'
+ic(iam)
 
-ec2 = boto3.resource('ec2')
-vpc = ec2.create_vpc(CidrBlock='10.0.0.0/16')
-vpc.create_tags(Tags=[{"Key":"TestVPC","Value":"default_vpc"}])
+# create S3 bucket and upload files
+bucket = s3Client.create_bucket(Bucket=config["bucket"]["name"], CreateBucketConfiguration={'LocationConstraint': config["aws"]["region"]})
+ic(bucket)
+bucketPolicyString = json.dumps(config["bucket"]["policy"])
+bucketPolicy = bucketPolicyString\
+    .replace("BUCKET_NAME",config["bucket"]["name"])\
+    .replace('"PRINCIPAL_NAME"', principal)
+s3Client.put_bucket_policy(Bucket=config["bucket"]["name"], Policy=bucketPolicy)
+for file in config["bucket"]["upload"]:
+    s3Client.upload_file(config["bucket"]["uploadDir"]+file, config["bucket"]["name"], file)
+
+# create VPC
+vpc = ec2Resource.create_vpc(CidrBlock=config["vpc"]["net"])
+vpc.create_tags(Tags=[{"Key":"Project","Value":config["tags"]["project"]}])
 vpc.wait_until_available()
-print(vpc.id)
-subnet = ec2.create_subnet(CidrBlock = '10.0.2.0/24', VpcId= vpc.id)
-print(subnet.id)
-ig = ec2.create_internet_gateway()
-vpc.attach_internet_gateway(InternetGatewayId = ig.id)
-print(ig.id)
+ic(vpc.id)
 
-response = sg.authorize_ingress(
+# create subnet
+subnet = ec2Resource.create_subnet(CidrBlock = config["subnet"]["net"], VpcId= vpc.id)
+ic(subnet.id)
+
+# create internet gateway
+ig = ec2Resource.create_internet_gateway()
+vpc.attach_internet_gateway(InternetGatewayId = ig.id)
+ic(ig.id)
+
+# create security group
+sg = ec2Client.create_security_group(GroupName=config["sg"]["name"],
+    Description=config["sg"]["desc"],
+    VpcId=vpc.id)
+response = ec2Client.authorize_security_group_ingress(
+    GroupId=sg["GroupId"],
     IpPermissions=[
         {
-            "FromPort": 22,
-            "ToPort": 22,
-            "IpProtocol": "tcp",
+            "FromPort": config["sg"]["ingress"]["fromPort"],
+            "ToPort": config["sg"]["ingress"]["toPort"],
+            "IpProtocol": config["sg"]["ingress"]["proto"],
             "IpRanges": [
-                {"CidrIp": "0.0.0.0/0", "Description": "internet"},
+                {"CidrIp": "0.0.0.0/0", "Description": "Internet"},
             ],
-        },
-        {
-            "FromPort": 80,
-            "ToPort": 80,
-            "IpProtocol": "tcp",
-            "IpRanges": [
-                {"CidrIp": "0.0.0.0/0", "Description": "internet"},
-            ],
-        },
+        }
     ],
 )
 
+# create instances
+ec2instances = []
+for host in config["hosts"]:
+    instances = ec2Resource.create_instances(
+        ImageId=config[host]["ami"],
+        MinCount=config[host]["count"],
+        MaxCount=config[host]["count"],
+        InstanceType=config[host]["size"],
+        KeyName=config["keypair"]["name"],
+        UserData=config[host]["userdata"],
+        NetworkInterfaces=[
+            {
+                "SubnetId": subnet.id,
+                "DeviceIndex": 0,
+                "AssociatePublicIpAddress": True,
+                "Groups": [sg["GroupId"]],
+            }
+        ],
+    )
+    for instance in instances:
+        ec2instances.append(instance)
+        ec2Resource.create_tags(Resources=[instance.id],
+            Tags=[{'Key':'name', 'Value': config[host]["name"]}])
 
+# build a list of tear-down feedback
+tearDown = []
 
-response = ec2.delete_key_pair(KeyName=config["keypair"]["name"])
+# delete instances
+for instance in ec2instances:
+    tearDown.append(instance.terminate())
+
+# delete security group
+tearDown.append(ec2Client.delete_security_group(GroupId=sg["GroupId"]))
+
+# delete internet gateway
+vpc.detach_internet_gateway(InternetGatewayId = ig.id)
+tearDown.append(ig.delete())
+
+# delete subnet
+tearDown.append(subnet.delete())
+
+# delete VPC
+tearDown.append(vpc.delete())
+
+# delete S3 bucket
+s3Resource.Bucket(config["bucket"]["name"]).objects.all().delete()
+tearDown.append(s3Client.delete_bucket(Bucket = config["bucket"]["name"]))
+
+# delete IAM user
+tearDown.append(iamClient.delete_user(UserName = config["iam"]["name"]))
+
+# delete keypair
+tearDown.append(ec2Client.delete_key_pair(KeyName=config["keypair"]["name"]))
+
+ic(tearDown)

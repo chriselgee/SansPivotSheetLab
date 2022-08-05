@@ -7,12 +7,39 @@ tags:
 
 hosts: [webserver, clients, attacker]
 
+iam:
+  name: hammer-user8675309
+
+bucket:
+  name: hammer-bucket8675309
+  policy: {"Version": "2012-10-17",
+      "Statement": [{
+        "Sid": "AddPerm",
+        "Effect": "Allow",
+        "Principal": PRINCIPAL_NAME,
+        "Action": ["s3:GetObject", "s3:PutObject"],
+        "Resource": "arn:aws:s3:::BUCKET_NAME/*"
+      }]
+    }
+  uploadDir: assets/
+  upload: [website.tar.gz,
+    userAgents.txt,
+    webattacker.py,
+    webattacker.service,
+    webclient.py,
+    webclient.service,
+    webserve.service,
+    urls.txt]
+
 webserver:
   ami: ami-07f84a50d2dec2fa4
   count: 1
+  download: [website.tar.gz,
+    webserve.service]
   host: www.toteslegit.us
+  name: WebServer
   ports: [22, 8000]
-  size: t2-micro
+  size: t2.micro
   userdata: |
     whoami > /tmp/who.txt
     sudo apt -y install nmap ncat python3 python3-pip et-tools awscli
@@ -24,8 +51,13 @@ webserver:
 clients:
   ami: ami-07f84a50d2dec2fa4
   count: 2
+  download: [urls.txt,
+    userAgents.txt,
+    webclient.py,
+    webclient.service]
+  name: WebClients
   ports: [22]
-  size: t2-micro
+  size: t2.micro
   userdata: |
     whoami > /tmp/who.txt
     sudo apt -y install nmap ncat python3 python3-pip net-tools
@@ -36,8 +68,13 @@ clients:
 attacker:
   ami: ami-07f84a50d2dec2fa4
   count: 1
+  download: [webattacker.py,
+    webattacker.service,
+    urls.txt,
+    userAgents.txt]
+  name: Attacker
   ports: [22]
-  size: t2-micro
+  size: t2.micro
   userdata: |
     whoami > /tmp/who.txt
     sudo apt -y install nmap ncat python3 python3-pip net-tools
@@ -51,3 +88,15 @@ vpc:
 
 subnet:
   net: 10.12.42.0/24
+
+sg:
+  name: hammer-sg
+  desc: These are not the hammer
+  ingress:
+    proto: tcp
+    fromPort: 22
+    toPort: 8000
+  egress:
+    proto: tcp
+    fromPort: 0
+    toPort: 65535
