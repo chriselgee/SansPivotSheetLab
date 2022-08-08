@@ -6,6 +6,13 @@ import yaml
 import os
 from time import sleep
 
+def ec2StatusWait(instances=[], status="running", napLen=10):
+    while not ready:
+        ready = True
+        for instance in instances:
+            if instance.state["Name"] != status: ready = False
+        sleep(napLen)
+
 # setup from deploy.ini
 with open("deploy.yaml", "r") as ymlfile:
     config = yaml.safe_load(ymlfile)
@@ -14,6 +21,7 @@ boto3.setup_default_session(profile_name=config["aws"]["profile"], region_name=c
 ec2Client = boto3.client('ec2')
 ec2Resource = boto3.resource('ec2')
 iamClient = boto3.client("iam")
+iamResource = boto3.resource("iam")
 s3Client = boto3.client('s3')
 s3Resource = boto3.resource('s3')
 accountID = boto3.client('sts').get_caller_identity().get('Account')
@@ -51,6 +59,10 @@ ic(vpc.id)
 
 # create subnet
 subnet = ec2Resource.create_subnet(CidrBlock = config["subnet"]["net"], VpcId= vpc.id)
+subnetResponse = ec2Client.modify_subnet_attribute(
+    SubnetId = subnet.id,
+    MapPublicIpOnLaunch={'Value': True}
+    )
 ic(subnet.id)
 
 # create internet gateway
@@ -58,12 +70,17 @@ ig = ec2Resource.create_internet_gateway()
 vpc.attach_internet_gateway(InternetGatewayId = ig.id)
 ic(ig.id)
 
+#rtTableResponse = ec2Client.create_route_table(VpcId=vpc.id)
+routeTable = vpc.create_route_table()
+route = routeTable.create_route(DestinationCidrBlock='0.0.0.0/0', GatewayId=ig.id)
+routeTable.associate_with_subnet(SubnetId=subnet.id)
+
 # create security group
 sg = ec2Client.create_security_group(GroupName=config["sg"]["name"],
     Description=config["sg"]["desc"],
     VpcId=vpc.id)
 
-response = ec2Client.authorize_security_group_ingress(
+sgResponse = ec2Client.authorize_security_group_ingress(
     GroupId=sg["GroupId"],
     IpPermissions=[
         {
@@ -78,11 +95,11 @@ response = ec2Client.authorize_security_group_ingress(
 )
 
 # create instances
-ec2instances = []
+# ec2instances = []
 for host in config["hosts"]:
     instances = ec2Resource.create_instances(
         ImageId=config[host]["ami"],
-        #ImageId="ami-0070c5311b7677678",
+        #ImageId="ami-07f84a50d2dec2fa4",
         MinCount=config[host]["count"],
         MaxCount=config[host]["count"],
         InstanceType=config[host]["size"],
@@ -97,11 +114,17 @@ for host in config["hosts"]:
             }
         ]
     )
+    sleep(1)
     for instance in instances:
-        ec2instances.append(instance)
-        ec2Resource.create_tags(Resources=[instance.id], Tags=[{'Key':'name', 'Value': config[host]["name"]}])
+        ec2Resource.create_tags(Resources=[instance.id], Tags=[{'Key':'Name', 'Value': config[host]["name"]}])
 
+ec2instances = ec2Resource.instances.all()
 ic(ec2instances)
+
+# ec2StatusWait(ec2instances, "running")
+# for instance in ec2instances:
+#     for line in 
+#     ec2SendCommand()
 
 userInput = "foo"
 while userInput != "exit":
@@ -115,7 +138,7 @@ while userInput != "exit":
         # print(f'Instance type: {each.instance_type}')
         print(f'Public IPv4 address: {each.public_ip_address}')
         print('-'*60)
-    userInput = input("To exit, type 'exit': ")
+    userInput = input("To tear it all down, type 'exit': ")
 
 
 # build a list of tear-down feedback
@@ -124,6 +147,14 @@ tearDown = []
 # delete instances
 for instance in ec2instances:
     tearDown.append(instance.terminate())
+
+while notDeadYet:
+    notDeadYet = False
+    print("Checking for living instances...")
+    for instance in ec2instances:
+        if instance.state["Name"] != "terminated": notDeadYet = True
+    sleep(10)
+print("All dead!")
 
 # delete security group
 tearDown.append(ec2Client.delete_security_group(GroupId=sg["GroupId"]))

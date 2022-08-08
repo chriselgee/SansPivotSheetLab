@@ -32,7 +32,7 @@ bucket:
     urls.txt]
 
 webserver:
-  ami: ami-0c7ecf2f5b6c2a8f7
+  ami: ami-07f84a50d2dec2fa4
   count: 1
   download: [website.tar.gz,
     webserve.service]
@@ -40,15 +40,17 @@ webserver:
   name: WebServer
   size: t2.micro
   userdata: |
+    #!/bin/bash
     whoami > /tmp/who.txt
-    sudo apt -y install nmap ncat python3 python3-pip et-tools awscli
+    sudo apt update
+    sudo apt -y install nmap ncat python3 python3-pip net-tools awscli tcpdump
     python3 -m pip install flask
     tar -xvf /opt/webserve.tar.gz -C /opt
     sudo systemctl enable webserve.service
     sudo systemctl start webserve.service
 
 clients:
-  ami: ami-0c7ecf2f5b6c2a8f7
+  ami: ami-07f84a50d2dec2fa4
   count: 2
   download: [urls.txt,
     userAgents.txt,
@@ -57,6 +59,7 @@ clients:
   name: WebClients
   size: t2.micro
   userdata: |
+    #!/bin/bash
     whoami > /tmp/who.txt
     sudo apt -y install nmap ncat python3 python3-pip net-tools
     sudo pip3 install requests --upgrade
@@ -64,7 +67,7 @@ clients:
     sudo systemctl start webclient.service
 
 attacker:
-  ami: ami-0c7ecf2f5b6c2a8f7
+  ami: ami-07f84a50d2dec2fa4
   count: 1
   download: [webattacker.py,
     webattacker.service,
@@ -73,6 +76,7 @@ attacker:
   name: Attacker
   size: t2.micro
   userdata: |
+    #!/bin/bash
     whoami > /tmp/who.txt
     sudo apt -y install nmap ncat python3 python3-pip net-tools
     echo "Hacking for cash monies!" > /opt/secrets.txt
