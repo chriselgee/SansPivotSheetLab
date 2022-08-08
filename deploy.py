@@ -62,6 +62,7 @@ ic(ig.id)
 sg = ec2Client.create_security_group(GroupName=config["sg"]["name"],
     Description=config["sg"]["desc"],
     VpcId=vpc.id)
+
 response = ec2Client.authorize_security_group_ingress(
     GroupId=sg["GroupId"],
     IpPermissions=[
@@ -81,6 +82,7 @@ ec2instances = []
 for host in config["hosts"]:
     instances = ec2Resource.create_instances(
         ImageId=config[host]["ami"],
+        #ImageId="ami-0070c5311b7677678",
         MinCount=config[host]["count"],
         MaxCount=config[host]["count"],
         InstanceType=config[host]["size"],
@@ -93,18 +95,26 @@ for host in config["hosts"]:
                 "AssociatePublicIpAddress": True,
                 "Groups": [sg["GroupId"]],
             }
-        ],
+        ]
     )
     for instance in instances:
         ec2instances.append(instance)
-        ec2Resource.create_tags(Resources=[instance.id],
-            Tags=[{'Key':'name', 'Value': config[host]["name"]}])
+        ec2Resource.create_tags(Resources=[instance.id], Tags=[{'Key':'name', 'Value': config[host]["name"]}])
+
 ic(ec2instances)
 
 userInput = "foo"
 while userInput != "exit":
-    print("Webserver: " + ec2instances[0].get(u'PublicIpAddress'))
-    print("Attacker:  " + ec2instances[3].get(u'PublicIpAddress'))
+    instanceCheck = ec2Resource.instances.all()
+    for each in instanceCheck:
+        print(f'EC2 instance {each.id} information:')
+        print(f'Instance name: {each.tags[0]["Value"]}')
+        print(f'Instance state: {each.state["Name"]}')
+        # print(f'Instance AMI: {each.image.id}')
+        # print(f'Instance platform: {each.platform}')
+        # print(f'Instance type: {each.instance_type}')
+        print(f'Public IPv4 address: {each.public_ip_address}')
+        print('-'*60)
     userInput = input("To exit, type 'exit': ")
 
 

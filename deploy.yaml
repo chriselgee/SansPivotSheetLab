@@ -32,7 +32,7 @@ bucket:
     urls.txt]
 
 webserver:
-  ami: ami-07f84a50d2dec2fa4
+  ami: ami-0c7ecf2f5b6c2a8f7
   count: 1
   download: [website.tar.gz,
     webserve.service]
@@ -48,7 +48,7 @@ webserver:
     sudo systemctl start webserve.service
 
 clients:
-  ami: ami-07f84a50d2dec2fa4
+  ami: ami-0c7ecf2f5b6c2a8f7
   count: 2
   download: [urls.txt,
     userAgents.txt,
@@ -64,7 +64,7 @@ clients:
     sudo systemctl start webclient.service
 
 attacker:
-  ami: ami-07f84a50d2dec2fa4
+  ami: ami-0c7ecf2f5b6c2a8f7
   count: 1
   download: [webattacker.py,
     webattacker.service,
