@@ -36,3 +36,7 @@ users.db
 
 # created by spin up script
 *.pem
+
+# Python cruft
+__pycache__/
+*.py[cod]

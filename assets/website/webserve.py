@@ -4,6 +4,9 @@ import os
 import argparse
 from DBFuncs import *
 import json
+from icecream import ic
+from lxml import etree
+import xml.etree.ElementTree as ET
 
 # colorize output
 OV = '\x1b[0;33m' # verbose
@@ -31,6 +34,30 @@ args, unknown = parser.parse_known_args()
 def index():
     sourceIP = request.remote_addr
     return render_template("index.html")
+
+@app.route("/proc", methods=["GET","POST"])
+# defines behavior for clients requesting /
+def proc():
+    if request.method == "GET":
+        return "Post XML here"
+    else:
+        parsed_xml = None
+        html = "<html><body>"
+        xml = request.get_data()
+        ic(xml)
+        try:
+            parser = etree.XMLParser(load_dtd=True, no_network=False)
+            tree = etree.fromstring(xml, parser=parser)
+            parsed_xml = etree.dump(tree.getroot())
+            
+            # parsed_xml = ET.fromstring(xml)
+            ic(parsed_xml)
+        except Exception as ex:
+            ic(f"Cannot parse the xml because {ex}")
+        if (parsed_xml):
+            html += f"\n<pre>{parsed_xml}</pre>\n"
+        html += "</body></html>"
+        return html
 
 @app.route("/aboutus.html", methods=["GET","POST"])
 # defines behavior for clients requesting /aboutus.html
