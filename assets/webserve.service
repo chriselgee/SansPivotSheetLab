@@ -4,6 +4,9 @@ After=network.target auditd.service
 StartLimitIntervalSec=0
 
 [Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/opt/website
 ExecStart=/usr/bin/python3 /opt/website/webserve.py
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process

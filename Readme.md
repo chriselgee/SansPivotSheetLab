@@ -17,9 +17,9 @@ This is for the purpose of asset creation for a CTF. Some code used from Terrafo
 
 ## Setup Steps
 ### Create Keys and Apply to YAML Configs
-- `ssh-keygen -t rsa -C "your_email@example.com" -f ../tf-cloud-init`
-- Look for `ssh_authorized_keys:` in the YAML files in `scripts/`. Replace the example public keys with the contents of your new `tf-cloud-init.pub`.  One-liner:
-  - `sed -i "s:ssh-rsa.*$:$(cat ../tf-cloud-init.pub|tr -d '\n'):" ./scripts/*yaml`
+- `ssh-keygen -t rsa -C "your_email@example.com" -f ../boto-lab-key`
+- Look for `ssh_authorized_keys:` in the YAML files in `scripts/`. Replace the example public keys with the contents of your new `boto-lab-key.pub`.  One-liner:
+  - `sed -i "s:ssh-rsa.*$:$(cat ../boto-lab-key.pub|tr -d '\n'):" ./scripts/*yaml`
 
 ### Set Default AWS Credentials
 - Check to see what you have in your `~/.aws/credentials` file:
@@ -53,8 +53,8 @@ $ terraform show #optional - to show assets and addresses again
 ```
 
 ### Connect to the website host with the IP from the Terraform Output
-- `ssh website@websiteIPHere -i ../tf-cloud-init`
-- `ssh attacker@attackerIPHere -i ../tf-cloud-init`
+- `ssh website@websiteIPHere -i ../boto-lab-key`
+- `ssh attacker@attackerIPHere -i ../boto-lab-key`
 - If you've lost track of those IPs, just `terraform show` to see them again
 
 ## Tear Down Steps

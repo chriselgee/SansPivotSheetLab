@@ -4,6 +4,7 @@ After=network.target auditd.service
 StartLimitIntervalSec=0
 
 [Service]
+WorkingDirectory=/opt
 ExecStart=/usr/bin/python3 /opt/webclient.py
 ExecReload=/bin/kill -HUP $MAINPID
 KillMode=process

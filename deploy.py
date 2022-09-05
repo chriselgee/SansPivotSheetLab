@@ -3,7 +3,6 @@ import boto3
 import json
 from icecream import ic
 import yaml
-import os
 from time import sleep
 
 def ec2StatusWait(instances=[], status="running", napLen=10):
@@ -38,6 +37,11 @@ iam = iamClient.create_user(UserName=config["iam"]["name"])
 principal = f'{{ "AWS": "arn:aws:iam::{accountID}:user/{config["iam"]["name"]}" }}'
 ic(iam)
 
+# create usable keys from IAM user
+resp = iamClient.create_access_key(UserName=config["iam"]["name"])
+iamAccessKeyId = resp['AccessKey']['AccessKeyId']
+iamSecretAccessKey = resp['AccessKey']['SecretAccessKey']
+
 # create S3 bucket and upload files
 bucket = s3Client.create_bucket(Bucket=config["bucket"]["name"], CreateBucketConfiguration={'LocationConstraint': config["aws"]["region"]})
 ic(bucket)
@@ -50,6 +54,8 @@ ic(bucketPolicy)
 s3Client.put_bucket_policy(Bucket=config["bucket"]["name"], Policy=bucketPolicy)
 for file in config["bucket"]["upload"]:
     s3Client.upload_file(config["bucket"]["uploadDir"]+file, config["bucket"]["name"], file)
+
+sleep(5) # replace with some kind of bucket/principal wait
 
 # create VPC
 vpc = ec2Resource.create_vpc(CidrBlock=config["vpc"]["net"])
@@ -97,6 +103,10 @@ sgResponse = ec2Client.authorize_security_group_ingress(
 # create instances
 # ec2instances = []
 for host in config["hosts"]:
+    userData = config[host]["userdata"].replace("AWSACCESSKEYID", iamAccessKeyId)
+    userData = userData.replace("SECRETACCESSKEY", iamSecretAccessKey)
+    userData = userData.replace("REGION", config["aws"]["region"])
+    userData = userData.replace("BUCKETNAME", config["bucket"]["name"])
     instances = ec2Resource.create_instances(
         ImageId=config[host]["ami"],
         #ImageId="ami-07f84a50d2dec2fa4",
@@ -104,7 +114,7 @@ for host in config["hosts"]:
         MaxCount=config[host]["count"],
         InstanceType=config[host]["size"],
         KeyName=config["keypair"]["name"],
-        UserData=config[host]["userdata"],
+        UserData=userData,
         NetworkInterfaces=[
             {
                 "SubnetId": subnet.id,
@@ -128,6 +138,7 @@ ic(ec2instances)
 
 userInput = "foo"
 while userInput != "exit":
+    print('='*60)
     instanceCheck = ec2Resource.instances.all()
     for each in instanceCheck:
         print(f'EC2 instance {each.id} information:')
@@ -148,11 +159,13 @@ tearDown = []
 for instance in ec2instances:
     tearDown.append(instance.terminate())
 
-while notDeadYet:
-    notDeadYet = False
-    print("Checking for living instances...")
+notDeadYet = 1
+while notDeadYet > 0:
+    notDeadYet = 0
+    print("Checking for living instances...", end='')
     for instance in ec2instances:
-        if instance.state["Name"] != "terminated": notDeadYet = True
+        if instance.state["Name"] != "terminated": notDeadYet += 1
+    print(f"... I still count {notDeadYet} alive.")
     sleep(10)
 print("All dead!")
 
@@ -166,12 +179,18 @@ tearDown.append(ig.delete())
 # delete subnet
 tearDown.append(subnet.delete())
 
+# delete route table
+tearDown.append(routeTable.delete())
+
 # delete VPC
 tearDown.append(vpc.delete())
 
 # delete S3 bucket
 s3Resource.Bucket(config["bucket"]["name"]).objects.all().delete()
 tearDown.append(s3Client.delete_bucket(Bucket = config["bucket"]["name"]))
+
+# delete usable access keys
+tearDown.append(iamClient.delete_access_key(AccessKeyId=iamAccessKeyId))
 
 # delete IAM user
 tearDown.append(iamClient.delete_user(UserName = config["iam"]["name"]))

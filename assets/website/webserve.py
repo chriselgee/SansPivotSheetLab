@@ -92,7 +92,6 @@ def maintenance():
     else:
         site = ""
     responseVars["site"] = site
-    responseVars["playerID"] = playerid
     return render_template('index.html', **responseVars)
 
 @app.route('/login.html', methods=["GET","POST"])

@@ -29,7 +29,9 @@ bucket:
     webclient.py,
     webclient.service,
     webserve.service,
-    urls.txt]
+    urls.txt,
+    passwords.txt,
+    users.txt]
 
 webserver:
   ami: ami-07f84a50d2dec2fa4
@@ -42,12 +44,20 @@ webserver:
   userdata: |
     #!/bin/bash
     whoami > /tmp/who.txt
-    sudo apt update
-    sudo apt -y install nmap ncat python3 python3-pip net-tools awscli tcpdump
-    python3 -m pip install flask
-    tar -xvf /opt/webserve.tar.gz -C /opt
-    sudo systemctl enable webserve.service
-    sudo systemctl start webserve.service
+    apt update
+    apt -y install nmap ncat python3 python3-pip net-tools awscli tcpdump awscli
+    python3 -m pip install flask icecream lxml
+    aws configure --profile default set aws_access_key_id AWSACCESSKEYID
+    aws configure --profile default set aws_secret_access_key SECRETACCESSKEY
+    aws configure --profile default set region REGION
+    aws sts get-caller-identity > /tmp/awsident.txt
+    aws s3 cp s3://BUCKETNAME/website.tar.gz /opt
+    aws s3 cp s3://BUCKETNAME/webserve.service /etc/systemd/system/
+    tar -xvf /opt/website.tar.gz -C /opt
+    chown -R www-data: /opt/website
+    iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8000
+    systemctl enable webserve.service
+    systemctl start webserve.service
 
 clients:
   ami: ami-07f84a50d2dec2fa4
@@ -61,10 +71,18 @@ clients:
   userdata: |
     #!/bin/bash
     whoami > /tmp/who.txt
-    sudo apt -y install nmap ncat python3 python3-pip net-tools
-    sudo pip3 install requests --upgrade
-    sudo systemctl enable webclient.service
-    sudo systemctl start webclient.service
+    apt update
+    apt -y install nmap ncat python3 python3-pip net-tools awscli
+    aws configure --profile default set aws_access_key_id AWSACCESSKEYID
+    aws configure --profile default set aws_secret_access_key SECRETACCESSKEY
+    aws configure --profile default set region REGION
+    aws sts get-caller-identity > /tmp/awsident.txt
+    aws s3 cp s3://BUCKETNAME/urls.txt /opt
+    aws s3 cp s3://BUCKETNAME/userAgents.txt /opt
+    aws s3 cp s3://BUCKETNAME/webclient.py /opt
+    aws s3 cp s3://BUCKETNAME/webclient.service /etc/systemd/system/
+    systemctl enable webclient.service
+    systemctl start webclient.service
 
 attacker:
   ami: ami-07f84a50d2dec2fa4
@@ -78,7 +96,19 @@ attacker:
   userdata: |
     #!/bin/bash
     whoami > /tmp/who.txt
-    sudo apt -y install nmap ncat python3 python3-pip net-tools
+    apt udpate
+    apt -y install nmap ncat python3 python3-pip net-tools awscli
+    pip3 install icecream
+    aws configure --profile default set aws_access_key_id AWSACCESSKEYID
+    aws configure --profile default set aws_secret_access_key SECRETACCESSKEY
+    aws configure --profile default set region REGION
+    aws sts get-caller-identity > /tmp/awsident.txt
+    aws s3 cp s3://BUCKETNAME/urls.txt /opt
+    aws s3 cp s3://BUCKETNAME/userAgents.txt /opt
+    aws s3 cp s3://BUCKETNAME/webattacker.py /opt
+    aws s3 cp s3://BUCKETNAME/webattacker.service /etc/systemd/system
+    systemctl enable webattacker.service
+    systemctl start webattacker.service
     echo "Hacking for cash monies!" > /opt/secrets.txt
 
 keypair:
