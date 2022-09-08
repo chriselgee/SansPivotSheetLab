@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-from flask import Flask, request, render_template, session, make_response
+from flask import Flask, request, render_template, session, make_response, redirect, url_for
 import os
 import argparse
 from DBFuncs import *
@@ -36,34 +36,36 @@ def index():
     return render_template("index.html")
 
 @app.route("/proc", methods=["GET","POST"])
-# defines behavior for clients requesting /
+# defines behavior for clients requesting /proc
 def proc():
-    if request.method == "GET":
-        return "Post XML here"
+    if not "user" in session: # dump them if they aren't logged in
+        return redirect(url_for("index"), code=302)
     else:
-        parsed_xml = None
-        html = "<html><body>"
-        xml = request.get_data()
-        ic(xml)
-        try:
-            parser = etree.XMLParser(load_dtd=True, no_network=False)
-            tree = etree.fromstring(xml, parser=parser)
-            parsed_xml = etree.dump(tree.getroot())
-            
-            # parsed_xml = ET.fromstring(xml)
-            ic(parsed_xml)
-        except Exception as ex:
-            ic(f"Cannot parse the xml because {ex}")
-        if (parsed_xml):
-            html += f"\n<pre>{parsed_xml}</pre>\n"
-        html += "</body></html>"
-        return html
+        if request.method == "GET":
+            return "Post XML here"
+        else:
+            parsed_xml = None
+            html = "<html><body>"
+            try:
+                xml = request.get_data()
+                # parser = etree.XMLParser(load_dtd=True, no_network=False, recover=True, strip_cdata=False)
+                parser = etree.XMLParser(no_network=False)
+                tree = etree.fromstring(xml, parser=parser)
+                parsed_xml = etree.tostring(tree)
+                # parsed_xml = etree.dump(tree.getroot())
+                # parsed_xml = ET.fromstring(xml)
+                ic(xml, parsed_xml, tree)
+                html += f"\n<pre>{parsed_xml.decode('utf')}</pre>\n"
+            except Exception as ex:
+                ic(f"Cannot parse the XML because {ex}")
+            html += "</body></html>"
+            return html
 
 @app.route("/aboutus.html", methods=["GET","POST"])
 # defines behavior for clients requesting /aboutus.html
 def aboutus():
     sourceIP = request.remote_addr
-    return render_template("index.html")
+    return render_template("aboutus.html")
 
 @app.route('/maintenance.html', methods=["GET","POST"])
 # defines behavior for clients requesting /maintenance.html
@@ -92,7 +94,7 @@ def maintenance():
     else:
         site = ""
     responseVars["site"] = site
-    return render_template('index.html', **responseVars)
+    return render_template('maintenance.html', **responseVars)
 
 @app.route('/login.html', methods=["GET","POST"])
 # defines behavior for clients requesting /login.html
@@ -100,18 +102,28 @@ def login():
     if request.method == "POST":
         if checkcreds(username=request.form['username'], password=md5it(request.form['password']))["Success"]:
             session["user"] = "username"
-            resp = make_response(render_template('admin.html'))
-            return resp
+            # resp = make_response(render_template('admin.html'))
+            # return resp
+            return redirect(url_for("admin"), code=302)
         else:
             error = "Invalid username or password"
-            return render_template('login.html', error=error)    
+            return render_template('login.html', error=error, code=200)
     else:
         return render_template('login.html')
+
+@app.route('/logout.html', methods=["GET", "POST"])
+# logout function
+def logout():
+    session.clear()
+    return redirect(url_for("index"))
 
 @app.route('/admin.html', methods=["GET","POST"])
 # defines behavior for clients requesting /login.html
 def admin():
-    return render_template("admin.html")
+    if "user" in session:
+        return render_template("admin.html")
+    else:  # dump them if they aren't logged in
+        return redirect(url_for("index"), code=302)
 
 if __name__ == "__main__":
     builddb()

@@ -1,3 +1,9 @@
+preconfig:
+  [
+    "rm ./assets/website.tar.gz",
+    "cd assets && tar -czvf website.tar.gz website"
+  ]
+
 aws:
   profile: hammer-deploy
   region: us-east-2
@@ -31,7 +37,8 @@ bucket:
     webserve.service,
     urls.txt,
     passwords.txt,
-    users.txt]
+    users.txt,
+    dirb.txt]
 
 webserver:
   ami: ami-07f84a50d2dec2fa4
@@ -61,7 +68,7 @@ webserver:
 
 clients:
   ami: ami-07f84a50d2dec2fa4
-  count: 2
+  count: 20
   download: [urls.txt,
     userAgents.txt,
     webclient.py,
@@ -96,7 +103,7 @@ attacker:
   userdata: |
     #!/bin/bash
     whoami > /tmp/who.txt
-    apt udpate
+    apt update
     apt -y install nmap ncat python3 python3-pip net-tools awscli
     pip3 install icecream
     aws configure --profile default set aws_access_key_id AWSACCESSKEYID
@@ -106,6 +113,9 @@ attacker:
     aws s3 cp s3://BUCKETNAME/urls.txt /opt
     aws s3 cp s3://BUCKETNAME/userAgents.txt /opt
     aws s3 cp s3://BUCKETNAME/webattacker.py /opt
+    aws s3 cp s3://BUCKETNAME/dirb.txt /opt
+    aws s3 cp s3://BUCKETNAME/users.txt /opt
+    aws s3 cp s3://BUCKETNAME/passwords.txt /opt
     aws s3 cp s3://BUCKETNAME/webattacker.service /etc/systemd/system
     systemctl enable webattacker.service
     systemctl start webattacker.service

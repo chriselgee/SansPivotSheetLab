@@ -3,7 +3,7 @@
     <body>
     <h1>Site maintenance</h1><!-- or something -->
     <p>Use this form to check the distance to other sitez!</p>
-    <form action="/" method="post">
+    <form action="/maintenance.html" method="post">
         <label for="site">Site:</label><br>
         <input type="text" id="site" name="site" value="127.0.0.1"><br>
         <input type="submit" value="Submit">
@@ -14,5 +14,6 @@
     <pre>
         {{output}}
     </pre>
-    <!-- <img src="{{url_for('static', filename='legit.png')}}" /> -->
+    <img src="{{url_for('static', filename='legit.png')}}" />
+    {% include 'navbar.html' %}
 </body></html>

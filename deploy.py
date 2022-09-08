@@ -2,6 +2,7 @@
 import boto3
 import json
 from icecream import ic
+import os
 import yaml
 from time import sleep
 
@@ -15,6 +16,12 @@ def ec2StatusWait(instances=[], status="running", napLen=10):
 # setup from deploy.ini
 with open("deploy.yaml", "r") as ymlfile:
     config = yaml.safe_load(ymlfile)
+
+try:
+    for cmd in config["preconfig"]:
+        print(os.popen(cmd,"r"))
+except Exception as ex:
+    ic(ex)
 
 boto3.setup_default_session(profile_name=config["aws"]["profile"], region_name=config["aws"]["region"])
 ec2Client = boto3.client('ec2')
@@ -149,6 +156,9 @@ while userInput != "exit":
         # print(f'Instance type: {each.instance_type}')
         print(f'Public IPv4 address: {each.public_ip_address}')
         print('-'*60)
+    print(f"Region is {config['aws']['region']}")
+    print(f"S3 bucket is s3://{config['bucket']['name']}")
+    print(f"AWS AccessKeyID is {iamAccessKeyId} and SecretAccessKey is {iamSecretAccessKey}")
     userInput = input("To tear it all down, type 'exit': ")
 
 
@@ -162,10 +172,10 @@ for instance in ec2instances:
 notDeadYet = 1
 while notDeadYet > 0:
     notDeadYet = 0
-    print("Checking for living instances...", end='')
+    print("Checking for living instances...  ", end='')
     for instance in ec2instances:
         if instance.state["Name"] != "terminated": notDeadYet += 1
-    print(f"... I still count {notDeadYet} alive.")
+    print(f"...  I still count {notDeadYet} alive.")
     sleep(10)
 print("All dead!")
 
