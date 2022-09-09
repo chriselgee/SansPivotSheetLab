@@ -17,12 +17,13 @@ OM = '\x1b[0m'    # mischief managed
 # app = Quart(__name__)
 app = Flask(__name__)
 
-app.secret_key = b'n924hg2hqohvq9283sns0'
+app.secret_key = b'cyberworld'
 app.config.update(
 #    SESSION_COOKIE_SECURE=True,
     SESSION_COOKIE_HTTPONLY=True,
 #    SESSION_COOKIE_SAMESITE='None',
-    SESSION_COOKIE_NAME='SiteCookie'
+    SESSION_COOKIE_NAME='SiteCookie',
+    JWT_ALGORITHM = 'HS256'
 )
 
 parser = argparse.ArgumentParser()
@@ -101,7 +102,9 @@ def maintenance():
 def login():
     if request.method == "POST":
         if checkcreds(username=request.form['username'], password=md5it(request.form['password']))["Success"]:
-            session["user"] = "username"
+            session["user"] = request.form['username']
+            session["level"] = "admin"
+            session["company"] = "LegitBread"
             # resp = make_response(render_template('admin.html'))
             # return resp
             return redirect(url_for("admin"), code=302)

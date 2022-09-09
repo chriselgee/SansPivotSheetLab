@@ -68,7 +68,7 @@ webserver:
 
 clients:
   ami: ami-07f84a50d2dec2fa4
-  count: 20
+  count: 15
   download: [urls.txt,
     userAgents.txt,
     webclient.py,

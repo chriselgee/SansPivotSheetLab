@@ -58,11 +58,11 @@ bucketPolicy = bucketPolicyString\
     .replace('"PRINCIPAL_NAME"', principal)
 
 ic(bucketPolicy)
+sleep(10) # replace with some kind of bucket/principal wait
+
 s3Client.put_bucket_policy(Bucket=config["bucket"]["name"], Policy=bucketPolicy)
 for file in config["bucket"]["upload"]:
     s3Client.upload_file(config["bucket"]["uploadDir"]+file, config["bucket"]["name"], file)
-
-sleep(5) # replace with some kind of bucket/principal wait
 
 # create VPC
 vpc = ec2Resource.create_vpc(CidrBlock=config["vpc"]["net"])
@@ -175,7 +175,7 @@ while notDeadYet > 0:
     print("Checking for living instances...  ", end='')
     for instance in ec2instances:
         if instance.state["Name"] != "terminated": notDeadYet += 1
-    print(f"...  I still count {notDeadYet} alive.")
+    print(f"...  I count {notDeadYet} alive.")
     sleep(10)
 print("All dead!")
 
@@ -200,7 +200,7 @@ s3Resource.Bucket(config["bucket"]["name"]).objects.all().delete()
 tearDown.append(s3Client.delete_bucket(Bucket = config["bucket"]["name"]))
 
 # delete usable access keys
-tearDown.append(iamClient.delete_access_key(AccessKeyId=iamAccessKeyId))
+tearDown.append(iamClient.delete_access_key(UserName=config["iam"]["name"], AccessKeyId=iamAccessKeyId))
 
 # delete IAM user
 tearDown.append(iamClient.delete_user(UserName = config["iam"]["name"]))

