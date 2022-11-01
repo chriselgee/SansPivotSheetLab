@@ -35,16 +35,24 @@ bucket:
     webclient.py,
     webclient.service,
     webserve.service,
+    artifact.service,
+    artifact.sh,
+    clientrequirements.txt,
     urls.txt,
     passwords.txt,
     users.txt,
     dirb.txt]
+  downloadDir: output/
+  download: [weberror.log,
+    victim.pcap]
 
 webserver:
   ami: ami-07f84a50d2dec2fa4
   count: 1
   download: [website.tar.gz,
-    webserve.service]
+    webserve.service,
+    artifact.service,
+    artifact.sh]
   host: www.toteslegit.us
   name: WebServer
   size: t2.micro
@@ -59,17 +67,22 @@ webserver:
     aws configure --profile default set region REGION
     aws sts get-caller-identity > /tmp/awsident.txt
     aws s3 cp s3://BUCKETNAME/website.tar.gz /opt
+    aws s3 cp s3://BUCKETNAME/artifact.sh /root
     aws s3 cp s3://BUCKETNAME/webserve.service /etc/systemd/system/
+    aws s3 cp s3://BUCKETNAME/artifact.service /etc/systemd/system/
     tar -xvf /opt/website.tar.gz -C /opt
     chown -R www-data: /opt/website
     iptables -t nat -A PREROUTING -i eth0 -p tcp --dport 80 -j REDIRECT --to-port 8000
     systemctl enable webserve.service
     systemctl start webserve.service
+    systemctl enable artifact.service
+    systemctl start artifact.service
 
 clients:
   ami: ami-07f84a50d2dec2fa4
   count: 15
-  download: [urls.txt,
+  download: [clientrequirements.txt,
+    urls.txt,
     userAgents.txt,
     webclient.py,
     webclient.service]
@@ -84,10 +97,12 @@ clients:
     aws configure --profile default set aws_secret_access_key SECRETACCESSKEY
     aws configure --profile default set region REGION
     aws sts get-caller-identity > /tmp/awsident.txt
+    aws s3 cp s3://BUCKETNAME/clientrequirements.txt /opt
     aws s3 cp s3://BUCKETNAME/urls.txt /opt
     aws s3 cp s3://BUCKETNAME/userAgents.txt /opt
     aws s3 cp s3://BUCKETNAME/webclient.py /opt
     aws s3 cp s3://BUCKETNAME/webclient.service /etc/systemd/system/
+    pip3 install -r /opt/clientrequirements.txt
     systemctl enable webclient.service
     systemctl start webclient.service
 

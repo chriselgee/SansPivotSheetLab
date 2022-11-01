@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import requests
+from bs4 import BeautifulSoup
 import random
 from time import sleep
 
@@ -20,10 +21,11 @@ header = {'User-Agent': random.choice(userAgents).strip()}
 while True:
     try:
         browse = req.get(random.choice(URLs), headers=header) # view a page
-        if b"img src" in browse.content: # load an image too, if present
-            substr = browse.content[(browse.content.find(b"static")):]
-            imgURL = substr[:substr.find(b'"')].decode("utf")
-            browse = req.get(URLs[0]+imgURL, headers=header) # yes, this would be much more robust with a headless browser
+        souperBrowse = BeautifulSoup(browse.content, "html.parser")
+        images = souperBrowse.find_all("img")
+        for image in images: # load images too, if present
+            imageURL = image.get("src")
+            browse = req.get(imageURL, headers=header)
     except Exception as ex:
         print(f"{OE}*** Exception {OR}{ex}{OE} ***{OM}")
     sleep(random.randint(1,5))

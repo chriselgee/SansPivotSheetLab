@@ -6,6 +6,12 @@ import os
 import yaml
 from time import sleep
 
+# colorize output
+OV = '\x1b[0;33m' # verbose
+OR = '\x1b[0;34m' # routine
+OE = '\x1b[1;31m' # error
+OM = '\x1b[0m'    # mischief managed
+
 def ec2StatusWait(instances=[], status="running", napLen=10):
     while not ready:
         ready = True
@@ -144,22 +150,36 @@ ic(ec2instances)
 #     ec2SendCommand()
 
 userInput = "foo"
-while userInput != "exit":
+prompt = f"""{OV}Type {OR}l{OV} to {OR}L{OV}ist available files
+{OV}Type {OR}d{OV} to {OR}D{OV}ownload target assets
+{OV}Type {OR}e{OV} to {OR}E{OV}xit and tear it all down
+{OV}Type anything else to reload target status:  {OM}"""
+while userInput.lower() != "e":
     print('='*60)
     instanceCheck = ec2Resource.instances.all()
     for each in instanceCheck:
-        print(f'EC2 instance {each.id} information:')
-        print(f'Instance name: {each.tags[0]["Value"]}')
-        print(f'Instance state: {each.state["Name"]}')
-        # print(f'Instance AMI: {each.image.id}')
-        # print(f'Instance platform: {each.platform}')
-        # print(f'Instance type: {each.instance_type}')
-        print(f'Public IPv4 address: {each.public_ip_address}')
-        print('-'*60)
-    print(f"Region is {config['aws']['region']}")
-    print(f"S3 bucket is s3://{config['bucket']['name']}")
-    print(f"AWS AccessKeyID is {iamAccessKeyId} and SecretAccessKey is {iamSecretAccessKey}")
-    userInput = input("To tear it all down, type 'exit': ")
+        if each.state["Name"] != "terminated":
+            print(f'{OV}EC2 instance {OR}{each.id} {OV}information:')
+            print(f'{OV}Instance name: {OR}{each.tags[0]["Value"]}')
+            print(f'{OV}Instance state: {OR}{each.state["Name"]}')
+            # print(f'Instance AMI: {each.image.id}')
+            # print(f'Instance platform: {each.platform}')
+            # print(f'Instance type: {each.instance_type}')
+            print(f'{OV}Public IPv4 address: {OR}{each.public_ip_address}')
+            print('-'*60)
+    print(f"{OV} Region is {OR}{config['aws']['region']}")
+    print(f"{OV} S3 bucket is {OR}s3://{config['bucket']['name']}")
+    print(f"{OV} AWS AccessKeyID is {OR}{iamAccessKeyId}{OV} and SecretAccessKey is {OR}{iamSecretAccessKey}")
+    if userInput.lower() == "l":
+        bucketFiles = s3Client.list_objects(Bucket=config['bucket']['name'])
+        print(f"{OV}Bucket contents: {OR}")
+        for file in bucketFiles["Contents"]:
+            print(f"  {OR}" + str(file['Size']) + f"{OV} bytes, {OR}" + file['Key'])
+    if userInput.lower() == "d":
+        for file in config["bucket"]["download"]:
+            print(f"{OV}Downloading {OR}{file}{OM}")
+            s3Resource.Bucket(config["bucket"]["name"]).download_file(file, config["bucket"]["downloadDir"]+file)
+    userInput = input(prompt)
 
 
 # build a list of tear-down feedback
@@ -172,12 +192,14 @@ for instance in ec2instances:
 notDeadYet = 1
 while notDeadYet > 0:
     notDeadYet = 0
-    print("Checking for living instances...  ", end='')
+    print(f"{OV}Checking for living instances...  ", end='')
     for instance in ec2instances:
         if instance.state["Name"] != "terminated": notDeadYet += 1
-    print(f"...  I count {notDeadYet} alive.")
-    sleep(10)
-print("All dead!")
+    print(f"...  I count {OR}{notDeadYet}{OV} alive.{OM}", end = '')
+    if notDeadYet > 0:
+        print(f"  {OV}Sleeping for 10s.{OM}")
+        sleep(10)
+print(f"\n  {OV}All dead!{OM}")
 
 # delete security group
 tearDown.append(ec2Client.delete_security_group(GroupId=sg["GroupId"]))
@@ -209,3 +231,5 @@ tearDown.append(iamClient.delete_user(UserName = config["iam"]["name"]))
 tearDown.append(ec2Client.delete_key_pair(KeyName=config["keypair"]["name"]))
 
 ic(tearDown)
+
+print(f"{OV}Successfully torn down!{OM}")
