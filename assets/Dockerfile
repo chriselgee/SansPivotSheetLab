@@ -8,5 +8,5 @@ RUN mkdir /opt/website
 COPY website/ /opt/website/
 
 WORKDIR "/opt/website"
-CMD ["/bin/bash"]
-# CMD ["python3", "webserve.py"]
+# CMD ["/bin/bash"]
+CMD ["python3", "webserve.py"]
